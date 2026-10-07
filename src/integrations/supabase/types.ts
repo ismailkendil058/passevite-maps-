@@ -1,0 +1,678 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.1"
+  }
+  public: {
+    Tables: {
+      completed_clients: {
+        Row: {
+          client_id: string
+          client_name: string
+          completed_at: string | null
+          doctor_id: string
+          id: string
+          phone: string
+          queue_entry_id: string | null
+          receptionist_id: string
+          session_id: string
+          state: string
+          total_amount: number
+          tranche_paid: number
+          treatment: string
+        }
+        Insert: {
+          client_id: string
+          client_name: string
+          completed_at?: string | null
+          doctor_id: string
+          id?: string
+          phone: string
+          queue_entry_id?: string | null
+          receptionist_id: string
+          session_id: string
+          state: string
+          total_amount?: number
+          tranche_paid?: number
+          treatment: string
+        }
+        Update: {
+          client_id?: string
+          client_name?: string
+          completed_at?: string | null
+          doctor_id?: string
+          id?: string
+          phone?: string
+          queue_entry_id?: string | null
+          receptionist_id?: string
+          session_id?: string
+          state?: string
+          total_amount?: number
+          tranche_paid?: number
+          treatment?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "completed_clients_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "completed_clients_queue_entry_id_fkey"
+            columns: ["queue_entry_id"]
+            isOneToOne: false
+            referencedRelation: "queue_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "completed_clients_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      },
+      expenses: {
+        Row: {
+          amount: number
+          category: string | null
+          created_at: string | null
+          created_by: string | null
+          date: string
+          description: string
+          id: string
+        }
+        Insert: {
+          amount?: number
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          date?: string
+          description: string
+          id?: string
+        }
+        Update: {
+          amount?: number
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          date?: string
+          description?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      suppliers: {
+        Row: {
+          id: string
+          name: string
+          created_at: string | null
+          created_by: string | null
+        }
+        Insert: {
+          id?: string
+          name: string
+          created_at?: string | null
+          created_by?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          created_at?: string | null
+          created_by?: string | null
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          id: string
+          name: string
+          created_at: string | null
+          created_by: string | null
+        }
+        Insert: {
+          id?: string
+          name: string
+          created_at?: string | null
+          created_by?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          created_at?: string | null
+          created_by?: string | null
+        }
+        Relationships: []
+      }
+      invoices: {
+        Row: {
+          id: string
+          supplier_id: string | null
+          date: string
+          payment_method: string
+          total_amount: number
+          created_at: string | null
+          created_by: string | null
+        }
+        Insert: {
+          id?: string
+          supplier_id?: string | null
+          date?: string
+          payment_method: string
+          total_amount?: number
+          created_at?: string | null
+          created_by?: string | null
+        }
+        Update: {
+          id?: string
+          supplier_id?: string | null
+          date?: string
+          payment_method?: string
+          total_amount?: number
+          created_at?: string | null
+          created_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      invoice_items: {
+        Row: {
+          id: string
+          invoice_id: string
+          product_id: string | null
+          quantity: number
+          expiration_date: string | null
+          unit_price: number
+          total_price: number
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          invoice_id: string
+          product_id?: string | null
+          quantity: number
+          expiration_date?: string | null
+          unit_price: number
+          total_price: number
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          invoice_id?: string
+          product_id?: string | null
+          quantity?: number
+          expiration_date?: string | null
+          unit_price?: number
+          total_price?: number
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      appointments: {
+        Row: {
+          appointment_at: string
+          client_name: string
+          client_phone: string
+          created_at: string | null
+          doctor_id: string | null
+          id: string
+          notes: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          appointment_at: string
+          client_name: string
+          client_phone: string
+          created_at?: string | null
+          doctor_id?: string | null
+          id?: string
+          notes?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          appointment_at?: string
+          client_name?: string
+          client_phone?: string
+          created_at?: string | null
+          doctor_id?: string | null
+          id?: string
+          notes?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+        ]
+      },
+      doctors: {
+        Row: {
+          created_at: string | null
+          id: string
+          initial: string
+          name: string
+          password: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          initial: string
+          name: string
+          password?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          initial?: string
+          name?: string
+          password?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
+      queue_entries: {
+        Row: {
+          client_id: string
+          created_at: string | null
+          doctor_id: string
+          id: string
+          patient_name: string | null
+          phone: string
+          position: number
+          session_id: string
+          state: string
+          state_number: number
+          status: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string | null
+          doctor_id: string
+          id?: string
+          patient_name?: string | null
+          phone: string
+          position: number
+          session_id: string
+          state: string
+          state_number: number
+          status?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string | null
+          doctor_id?: string
+          id?: string
+          patient_name?: string | null
+          phone?: string
+          position?: number
+          session_id?: string
+          state?: string
+          state_number?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "queue_entries_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "queue_entries_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      medications: {
+        Row: {
+          id: string
+          name: string
+          created_at: string | null
+          created_by: string | null
+        }
+        Insert: {
+          name: string
+          created_by?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          name?: string
+          created_by?: string | null
+          created_at?: string | null
+        }
+        Relationships: []
+      }
+      prescriptions: {
+        Row: {
+          id: string
+          doctor_id: string
+          patient_name: string
+          age: number | null
+          prescription_date: string
+          medications: Json
+          notes: string | null
+          created_at: string | null
+        }
+        Insert: {
+          doctor_id: string
+          patient_name: string
+          age?: number | null
+          prescription_date: string
+          medications: Json
+          notes?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          doctor_id?: string
+          patient_name?: string
+          age?: number | null
+          prescription_date?: string
+          medications?: Json
+          notes?: string | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prescriptions_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      sessions: {
+        Row: {
+          closed_at: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          opened_at: string | null
+          opened_by: string
+        }
+        Insert: {
+          closed_at?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          opened_at?: string | null
+          opened_by: string
+        }
+        Update: {
+          closed_at?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          opened_at?: string | null
+          opened_by?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      satisfied_stats: {
+        Row: {
+          date: string
+          count: number
+        }
+        Insert: {
+          date: string
+          count?: number
+        }
+        Update: {
+          date?: string
+          count?: number
+        }
+        Relationships: []
+      }
+      feedbacks: {
+        Row: {
+          id: string
+          name: string | null
+          phone: string | null
+          message: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name?: string | null
+          phone?: string | null
+          message: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string | null
+          phone?: string | null
+          message?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+    }
+    Enums: {
+      app_role: "receptionist" | "manager"
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+  | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+  | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+  ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+    DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+  : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+    DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+  ? R
+  : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+    DefaultSchema["Views"])
+  ? (DefaultSchema["Tables"] &
+    DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+      Row: infer R
+    }
+  ? R
+  : never
+  : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+  | keyof DefaultSchema["Tables"]
+  | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+  ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+  : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+    Insert: infer I
+  }
+  ? I
+  : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+    Insert: infer I
+  }
+  ? I
+  : never
+  : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+  | keyof DefaultSchema["Tables"]
+  | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+  ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+  : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+    Update: infer U
+  }
+  ? U
+  : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+    Update: infer U
+  }
+  ? U
+  : never
+  : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+  | keyof DefaultSchema["Enums"]
+  | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+  ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+  : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+  ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+  : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+  | keyof DefaultSchema["CompositeTypes"]
+  | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+  ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+  : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+  ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      app_role: ["receptionist", "manager"],
+    },
+  },
+} as const

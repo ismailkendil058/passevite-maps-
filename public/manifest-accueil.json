@@ -1,0 +1,23 @@
+{
+    "name": "PV accueil",
+    "short_name": "accueil",
+    "description": "Interface d'accueil PasseVite.",
+    "start_url": "/accueil/login",
+    "scope": "/accueil/",
+    "display": "standalone",
+    "background_color": "#FFFFFF",
+    "theme_color": "#FFFFFF",
+    "icons": [
+        {
+            "src": "/apple-touch-icon.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/VitalWeb.png",
+            "sizes": "192x192 512x512",
+            "type": "image/png"
+        }
+    ]
+}

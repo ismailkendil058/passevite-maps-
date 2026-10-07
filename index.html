@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="preconnect" href="https://gyiqvpudqowixwakxqis.supabase.co" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&family=Public+Sans:wght@100..900&display=swap"
+    rel="stylesheet">
+  <title>PasseVite Dentaire – Bab Ezzouar</title>
+  <meta name="description" content="L'excellence dentaire à Alger. Prenez rendez-vous en ligne." />
+  <meta name="author" content="PasseVite" />
+  <meta name="theme-color" content="#FFFFFF" />
+
+  <!-- TODO: Update og:title to match your application name -->
+  <meta property="og:title" content="PasseVite" />
+  <meta property="og:description" content="PasseVite - Votre sourire, notre priorité" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="/VitalWeb.png" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@PasseVite" />
+  <meta name="twitter:image" content="/VitalWeb.png" />
+  <link rel="icon" type="image/png" href="/VitalWeb.png" />
+  <script type="text/javascript">
+    (function () {
+      var path = window.location.pathname;
+      var manifest = '/manifest.json';
+      var title = 'PasseVite';
+
+      if (path.startsWith('/manager')) {
+        manifest = '/manifest-manager.json';
+        title = 'PV manager';
+      } else if (path.startsWith('/accueil')) {
+        manifest = '/manifest-accueil.json';
+        title = 'PV accueil';
+      } else if (path.startsWith('/doctor')) {
+        manifest = '/manifest-doctor.json';
+        title = 'PV doctor';
+      }
+
+      var link = document.createElement('link');
+      link.rel = 'manifest';
+      link.href = manifest;
+      document.head.appendChild(link);
+
+      var metaTitle = document.createElement('meta');
+      metaTitle.name = 'apple-mobile-web-app-title';
+      metaTitle.content = title;
+      document.head.appendChild(metaTitle);
+    })();
+  </script>
+
+  <!-- PWA & iOS Safari Full Screen Tags -->
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="text/javascript">
+    // Fix for iOS standalone mode links opening in Safari
+    (function (document, navigator, standalone) {
+      if ((standalone in navigator) && navigator[standalone]) {
+        var curnode, location = document.location, stop = /^(a|html)$/i;
+        document.addEventListener('click', function (e) {
+          curnode = e.target;
+          while (!(stop).test(curnode.nodeName)) {
+            curnode = curnode.parentNode;
+          }
+          if ('href' in curnode && (curnode.href.indexOf('http') || ~curnode.href.indexOf(location.host)) && (!curnode.target || curnode.target == '_self')) {
+            e.preventDefault();
+            location.href = curnode.href;
+          }
+        }, false);
+      }
+    })(document, window.navigator, 'standalone');
+  </script>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
+</html>

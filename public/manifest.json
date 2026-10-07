@@ -1,0 +1,63 @@
+{
+    "name": "PasseVite",
+    "short_name": "PasseVite",
+    "description": "Votre avis aide notre clinique à améliorer la qualité des soins.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#FFFFFF",
+    "theme_color": "#FFFFFF",
+    "icons": [
+        {
+            "src": "/apple-touch-icon.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/VitalWeb.png",
+            "sizes": "192x192 512x512",
+            "type": "image/png"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "PV doctor",
+            "short_name": "doctor",
+            "description": "Accès rapide au tableau de bord médecin",
+            "url": "/doctor/login",
+            "icons": [
+                {
+                    "src": "/VitalWeb.png",
+                    "sizes": "192x192",
+                    "type": "image/png"
+                }
+            ]
+        },
+        {
+            "name": "PV accueil",
+            "short_name": "accueil",
+            "description": "Accès rapide au portail de réception",
+            "url": "/accueil/login",
+            "icons": [
+                {
+                    "src": "/VitalWeb.png",
+                    "sizes": "192x192",
+                    "type": "image/png"
+                }
+            ]
+        },
+        {
+            "name": "PV manager",
+            "short_name": "manager",
+            "description": "Accès rapide au portail de gestion",
+            "url": "/manager/login",
+            "icons": [
+                {
+                    "src": "/VitalWeb.png",
+                    "sizes": "192x192",
+                    "type": "image/png"
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,231 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 33% 18%;
+
+    --card: 240 30% 98%;
+    --card-foreground: 240 33% 18%;
+
+    --popover: 240 30% 98%;
+    --popover-foreground: 240 33% 18%;
+
+    --primary: 240 60% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 30% 98%;
+    --secondary-foreground: 240 33% 18%;
+
+    --muted: 240 30% 95%;
+    --muted-foreground: 240 20% 45%;
+
+    --accent: 240 30% 95%;
+    --accent-foreground: 240 33% 18%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 240 30% 90%;
+    --input: 240 30% 90%;
+    --ring: 240 60% 60%;
+
+    --radius: 1.5rem;
+
+    --font-serif: "Cormorant Garamond", serif;
+    --font-sans: "Public Sans", sans-serif;
+
+    --sage-green: 240 60% 60%;
+    --sage-cream: 240 30% 98%;
+    --sage-charcoal: 240 33% 18%;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 240 33% 18%;
+    --sidebar-primary: 240 60% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 30% 95%;
+    --sidebar-accent-foreground: 240 33% 18%;
+    --sidebar-border: 240 30% 90%;
+    --sidebar-ring: 240 60% 60%;
+  }
+
+  .dark {
+    --background: 0 0% 5%;
+    --foreground: 0 0% 95%;
+
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 95%;
+
+    --primary: 240 60% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 20% 12%;
+    --secondary-foreground: 0 0% 95%;
+
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 60%;
+
+    --accent: 240 20% 12%;
+    --accent-foreground: 0 0% 95%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 95%;
+
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 240 60% 60%;
+    --sidebar-background: 0 0% 7%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 240 60% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 0 0% 15%;
+    --sidebar-ring: 240 60% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-background text-foreground overflow-x-hidden;
+    font-family: var(--font-sans);
+    font-feature-settings: "rlig" 1, "calt" 1;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Custom Aesthetic Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/20 rounded-full hover:bg-muted-foreground/30 transition-colors;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-white/10 backdrop-blur-md border border-white/20;
+  }
+
+  .glass-dark {
+    @apply bg-black/10 backdrop-blur-md border border-white/10;
+  }
+
+  .animate-fade-in {
+    opacity: 0;
+    animation: fadeIn 0.6s ease-out forwards;
+    will-change: opacity;
+  }
+
+  .animate-slide-up {
+    opacity: 0;
+    animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    will-change: transform, opacity;
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+    will-change: transform;
+  }
+
+  /* Hardware acceleration for smoother animations */
+  .gpu {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-5px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+@keyframes pan {
+  0% {
+    object-position: 0% 50%;
+  }
+
+  50% {
+    object-position: 100% 50%;
+  }
+
+  100% {
+    object-position: 0% 50%;
+  }
+}
+
+.animate-pan {
+  animation: pan 20s ease-in-out infinite;
+}
+
+/* Optimization for reducing layout shifts */
+img {
+  content-visibility: auto;
+}
