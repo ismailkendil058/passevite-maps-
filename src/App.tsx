@@ -1,4 +1,4 @@
-import { Suspense, lazy } from 'react';
+import { Component, Suspense, lazy, ReactNode, ErrorInfo } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -10,7 +10,6 @@ import DynamicManifest from "./components/DynamicManifest";
 const Index = lazy(() => import("./pages/Index"));
 const LoginAccueil = lazy(() => import("./pages/LoginAccueil"));
 const LoginManager = lazy(() => import("./pages/LoginManager"));
-const Website = lazy(() => import("./pages/Website"));
 const Accueil = lazy(() => import("./pages/Accueil"));
 const Client = lazy(() => import("./pages/Client"));
 const Manager = lazy(() => import("./pages/Manager"));
@@ -19,24 +18,62 @@ const Satisfaction = lazy(() => import("./pages/Satisfaction"));
 const Feedback = lazy(() => import("./pages/Feedback"));
 const Merci = lazy(() => import("./pages/Merci"));
 const NotFound = lazy(() => import("./pages/NotFound"));
-const Depenses = lazy(() => import("./pages/Depenses"));
-const Factures = lazy(() => import("./pages/Factures"));
-const AjouterFacture = lazy(() => import("./pages/AjouterFacture"));
-const Appointment = lazy(() => import("./pages/Appointment"));
-const LoginAppointment = lazy(() => import("./pages/LoginAppointment"));
 const TV = lazy(() => import("./pages/TV"));
 const LoginMedecin = lazy(() => import("./pages/LoginMedecin"));
 const MedecinDashboard = lazy(() => import("./pages/MedecinDashboard"));
 const UserManager = lazy(() => import("./pages/UserManager"));
-const LaboPage = lazy(() => import("./pages/LaboPage"));
-const PatientCard = lazy(() => import("./pages/PatientCard"));
 const Ordonnance = lazy(() => import("./pages/Ordonnance"));
-const Inventaire = lazy(() => import("./pages/Inventaire"));
-const LoginInventaire = lazy(() => import("./pages/LoginInventaire"));
 
 
 window.scrollTo(0, 0);
 
+interface ErrorBoundaryProps {
+  children: ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error?: Error;
+}
+
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error("Uncaught error in component:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6 text-center">
+          <h2 className="text-2xl font-bold text-foreground mb-2">Une erreur est survenue</h2>
+          <p className="text-sm text-muted-foreground mb-6">
+            Une mise à jour ou un problème de chargement a eu lieu.
+          </p>
+          <button
+            onClick={() => {
+              this.setState({ hasError: false });
+              window.location.reload();
+            }}
+            className="px-5 py-2.5 bg-primary text-primary-foreground font-bold rounded-xl shadow-md hover:bg-primary/90 transition-all active:scale-95 text-sm"
+          >
+            Recharger la page
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 const LoadingScreen = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
@@ -62,7 +99,6 @@ function ProtectedRoute({ children, requiredRoles }: { children: React.ReactNode
 
   if (!user) {
     const path = window.location.pathname;
-    if (path.startsWith('/appointment')) return <Navigate to="/appointment/login" replace />;
     if (path.startsWith('/accueil')) return <Navigate to="/accueil/login" replace />;
     if (path.startsWith('/manager')) return <Navigate to="/manager/login" replace />;
 
@@ -90,65 +126,42 @@ const App = () => (
     <BrowserRouter>
       <DynamicManifest />
       <AuthProvider>
-        <Suspense fallback={<LoadingScreen />}>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/website" element={<Website />} />
-            <Route path="/accueil/login" element={<LoginAccueil />} />
-            <Route path="/manager/login" element={<LoginManager />} />
-            <Route path="/appointment/login" element={<LoginAppointment />} />
-            <Route path="/inventaire/login" element={<LoginInventaire />} />
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingScreen />}>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/accueil/login" element={<LoginAccueil />} />
+              <Route path="/manager/login" element={<LoginManager />} />
 
-            <Route path="/client" element={<Client />} />
-            <Route path="/review" element={<Satisfaction />} />
-            <Route path="/feedback" element={<Feedback />} />
-            <Route path="/merci" element={<Merci />} />
-            <Route path="/accueil" element={
-              <ProtectedRoute requiredRoles={['receptionist', 'manager', 'admin']}><Accueil /></ProtectedRoute>
-            } />
-            <Route path="/manager" element={
-              <ProtectedRoute requiredRoles={['manager', 'admin']}><Manager /></ProtectedRoute>
-            } />
-            <Route path="/manager/depenses" element={
-              <ProtectedRoute requiredRoles={['manager', 'admin']}><Depenses /></ProtectedRoute>
-            } />
-            <Route path="/manager/users" element={
-              <ProtectedRoute requiredRoles={['manager', 'admin']}><UserManager /></ProtectedRoute>
-            } />
-            <Route path="/manager/factures" element={
-              <ProtectedRoute requiredRoles={['manager', 'receptionist', 'admin']}><Factures /></ProtectedRoute>
-            } />
-            <Route path="/manager/factures/ajouter" element={
-              <ProtectedRoute requiredRoles={['manager', 'receptionist', 'admin']}><AjouterFacture /></ProtectedRoute>
-            } />
-            <Route path="/accueil/factures/ajouter" element={
-              <ProtectedRoute requiredRoles={['manager', 'receptionist', 'admin']}><AjouterFacture /></ProtectedRoute>
-            } />
-            <Route path="/labo" element={
-              <ProtectedRoute requiredRoles={['manager', 'receptionist', 'admin']}><LaboPage /></ProtectedRoute>
-            } />
+              <Route path="/client" element={<Client />} />
+              <Route path="/review" element={<Satisfaction />} />
+              <Route path="/feedback" element={<Feedback />} />
+              <Route path="/merci" element={<Merci />} />
+              <Route path="/accueil" element={
+                <ProtectedRoute requiredRoles={['receptionist', 'manager', 'admin']}><Accueil /></ProtectedRoute>
+              } />
+              <Route path="/manager" element={
+                <ProtectedRoute requiredRoles={['manager', 'admin']}><Manager /></ProtectedRoute>
+              } />
+              <Route path="/manager/users" element={
+                <ProtectedRoute requiredRoles={['manager', 'admin']}><UserManager /></ProtectedRoute>
+              } />
 
 
 
-            <Route path="/rendezvous" element={
-              <ProtectedRoute requiredRoles={['manager', 'receptionist', 'admin']}><Rendezvous /></ProtectedRoute>
-            } />
-            <Route path="/appointment" element={
-              <ProtectedRoute requiredRoles={['manager', 'admin']}><Appointment /></ProtectedRoute>
-            } />
-            <Route path="/tv" element={<TV />} />
-            <Route path="/doctor/login" element={<LoginMedecin />} />
-            <Route path="/doctor" element={
-              <MedecinDashboard />
-            } />
-            <Route path="/patient" element={<PatientCard />} />
-            <Route path="/inventaire" element={
-              <ProtectedRoute requiredRoles={['manager', 'receptionist', 'admin']}><Inventaire /></ProtectedRoute>
-            } />
-            <Route path="*" element={<NotFound />} />
+              <Route path="/rendezvous" element={
+                <ProtectedRoute requiredRoles={['manager', 'receptionist', 'admin']}><Rendezvous /></ProtectedRoute>
+              } />
+              <Route path="/tv" element={<TV />} />
+              <Route path="/doctor/login" element={<LoginMedecin />} />
+              <Route path="/doctor" element={
+                <MedecinDashboard />
+              } />
+              <Route path="*" element={<NotFound />} />
 
-          </Routes>
-        </Suspense>
+            </Routes>
+          </Suspense>
+        </ErrorBoundary>
       </AuthProvider>
     </BrowserRouter>
   </QueryClientProvider>

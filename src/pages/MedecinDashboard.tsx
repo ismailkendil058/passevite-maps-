@@ -16,7 +16,7 @@ import {
     PieChart, DollarSign, Activity, FileDown, Edit3,
     X, Printer, ClipboardList, CheckCircle2, ChevronRight,
     LayoutDashboard, MapPin, Phone, ArrowUpRight, User, Trash2,
-    Calendar as CalIcon, MessageSquare, XCircle, UserCheck, Pill
+    Calendar as CalIcon, MessageSquare, XCircle, UserCheck, Pill, Pause, Play
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -61,7 +61,7 @@ const COMMON_MEDICATIONS: Record<string, any> = {
 const MedecinDashboard = () => {
     const navigate = useNavigate();
     const { user, signOut } = useAuth();
-    const { entries, inCabinetEntries, completeClient, handoffConsultation, returnToQueue, doctors, callClient } = useQueue();
+    const { entries, inCabinetEntries, completeClient, handoffConsultation, returnToQueue, doctors, callClient, pausedDoctors, toggleDoctorPause } = useQueue();
     const queryClient = useQueryClient();
 
     // LOGGED IN DOCTOR INFO
@@ -821,9 +821,9 @@ const MedecinDashboard = () => {
 
             <main className="p-4 lg:p-6 flex-1 space-y-6 w-full">
                 <Tabs defaultValue="cabinet" className="w-full">
-                    <TabsList className="flex flex-nowrap w-full overflow-x-auto no-scrollbar md:grid md:grid-cols-5 md:overflow-visible justify-start md:justify-center bg-muted/50 p-1 rounded-xl h-auto md:h-12 gap-1 [&>button]:shrink-0">
+                    <TabsList className="flex flex-nowrap w-full overflow-x-auto no-scrollbar md:grid md:grid-cols-3 md:overflow-visible justify-start md:justify-center bg-muted/50 p-1 rounded-xl h-auto md:h-12 gap-1 [&>button]:shrink-0">
                         <TabsTrigger value="cabinet" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                            <UserCheck className="h-4 w-4 mr-2" /> Cabinet
+                            <Clock className="h-4 w-4 mr-2" /> File d'attente ({doctorEntries.length})
                         </TabsTrigger>
                         <TabsTrigger value="ordonnances" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
                             <FileText className="h-4 w-4 mr-2" /> Ordonnances
@@ -831,252 +831,101 @@ const MedecinDashboard = () => {
                         <TabsTrigger value="calendar" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
                             <CalendarIcon className="h-4 w-4 mr-2" /> Agenda
                         </TabsTrigger>
-                        <TabsTrigger value="patients" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                            <Users className="h-4 w-4 mr-2" /> Patients
-                        </TabsTrigger>
-                        <TabsTrigger value="analytics" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                            <PieChart className="h-4 w-4 mr-2" /> Analyses
-                        </TabsTrigger>
                     </TabsList>
 
-                    {/* CABINET CONTENT */}
-                    <TabsContent value="cabinet" className="mt-8 animate-in fade-in slide-in-from-bottom-3 duration-500">
-                        <div className="mb-8 px-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                            <h1 className="text-2xl font-black italic text-slate-800">Gestion des Traitements</h1>
-                            <Button
-                                onClick={() => setShowQueueDialog(true)}
-                                className="rounded-xl h-11 px-6 shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 font-bold"
-                            >
-                                <Clock className="h-4 w-4 mr-2" /> File d'attente
-                            </Button>
+                    {/* FILE D'ATTENTE & CABINET CONTENT */}
+                    <TabsContent value="cabinet" className="mt-8 animate-in fade-in slide-in-from-bottom-3 duration-500 space-y-6">
+                        <div className="mb-4 px-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div>
+                                <h1 className="text-2xl font-black italic text-slate-800 flex items-center gap-3">
+                                    <Clock className="h-7 w-7 text-primary" /> File d'attente ({doctorEntries.length})
+                                </h1>
+                                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">
+                                    Consultation et file d'attente des patients
+                                </p>
+                            </div>
+                            {doctorInfo && (
+                                <Button
+                                    onClick={() => toggleDoctorPause(doctorInfo.id)}
+                                    className={cn(
+                                        "rounded-full font-black h-11 px-7 transition-all duration-300 flex items-center gap-2.5 text-sm tracking-wide shrink-0 shadow-lg border-0",
+                                        pausedDoctors[doctorInfo.id]
+                                            ? "bg-rose-500 hover:bg-rose-600 text-white shadow-rose-200"
+                                            : "bg-primary hover:bg-primary/90 text-white shadow-primary/30"
+                                    )}
+                                >
+                                    {pausedDoctors[doctorInfo.id] ? (
+                                        <>
+                                            <Play className="h-4 w-4 fill-current shrink-0" />
+                                            <span>Reprendre</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Pause className="h-4 w-4 fill-current shrink-0" />
+                                            <span>Pause</span>
+                                        </>
+                                    )}
+                                </Button>
+                            )}
                         </div>
 
-                        {activeCabinetEntries.length > 0 ? (
-                            <div className="w-full">
-                                <Card className="border-none shadow-premium rounded-[2.5rem] overflow-hidden bg-white">
-                                    <div className="p-10 border-b bg-slate-50/50">
-                                        <div className="flex flex-col items-center text-center gap-4">
-                                            <div className="h-20 w-20 bg-primary/10 rounded-[2rem] flex items-center justify-center shadow-inner">
-                                                <UserCheck className="h-10 w-10 text-primary" />
-                                            </div>
-                                            <div>
-                                                <h2 className="text-3xl font-black italic text-slate-800 uppercase tracking-tight">Définir le traitement</h2>
-                                                <p className="text-xs text-slate-400 font-bold uppercase tracking-[0.3em] leading-tight mt-1">Patient · {selectedEntry?.patient_name}</p>
-                                            </div>
-
-                                            {activeCabinetEntries.length > 1 && (
-                                                <div className="mt-4 flex items-center gap-4 bg-white p-2.5 rounded-2xl border border-slate-100 shadow-sm">
-                                                    <span className="text-[10px] font-black uppercase text-slate-400 pl-2 tracking-widest">Choisir Patient :</span>
-                                                    <div className="flex gap-1.5">
-                                                        {activeCabinetEntries.map((entry, idx) => (
-                                                            <Button
-                                                                key={entry.id}
-                                                                variant={selectedEntry?.id === entry.id ? 'default' : 'ghost'}
-                                                                className={cn(
-                                                                    "h-10 w-10 rounded-xl font-black text-xs p-0 transition-all",
-                                                                    selectedEntry?.id === entry.id ? "bg-primary text-white shadow-lg shadow-primary/20 scale-110" : "text-slate-400 hover:bg-slate-50"
-                                                                )}
-                                                                onClick={() => handleCompleteClick(entry)}
-                                                            >
-                                                                {idx + 1}
-                                                            </Button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className="p-10 bg-white">
-                                        <div className="max-w-4xl mx-auto space-y-12">
-                                            {/* HISTORIQUE */}
-                                            {historyTreatments.length > 0 && (
-                                                <div className="space-y-4 text-center">
-                                                    <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Historique des traitements</p>
-                                                    <div className="flex flex-col gap-2">
-                                                        {historyTreatments.map(ht => (
-                                                            <Button
-                                                                key={ht.treatment}
-                                                                variant={selectedHistoryTreatment === ht.treatment ? 'secondary' : 'outline'}
-                                                                className={cn(
-                                                                    "justify-between h-14 rounded-2xl border-slate-100 font-bold px-6 group transition-all",
-                                                                    selectedHistoryTreatment === ht.treatment ? "bg-primary/5 border-primary/20 text-primary ring-2 ring-primary/10" : "hover:bg-slate-50"
-                                                                )}
-                                                                onClick={() => {
-                                                                    if (selectedHistoryTreatment === ht.treatment) {
-                                                                        setSelectedHistoryTreatment(null);
-                                                                        setTreatment('');
-                                                                        setTotalAmount('');
-                                                                        setTotalPaidPreviously(0);
-                                                                    } else {
-                                                                        setSelectedHistoryTreatment(ht.treatment);
-                                                                        setTreatment(ht.treatment);
-                                                                        setTotalAmount(ht.totalAmount?.toString() || '');
-                                                                        setTotalPaidPreviously(ht.totalPaid || 0);
-                                                                    }
-                                                                }}
-                                                            >
-                                                                <span className="truncate">{ht.treatment}</span>
-                                                                <Badge variant="outline" className="border-none font-black text-[10px] bg-slate-100 text-slate-500 rounded-lg">
-                                                                    {(ht.totalPaid || 0).toLocaleString()} / {(ht.totalAmount || 0).toLocaleString()} DZD
-                                                                </Badge>
-                                                            </Button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {/* MULTI-ACTS SECTION */}
-                                            <div className="space-y-4">
-                                                <div className="flex items-center justify-between px-2">
-                                                    <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Actes réalisés ({selectedActs.length})</p>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => setIsAddActOpen(true)}
-                                                        className="h-8 rounded-xl border-primary/20 text-primary font-bold px-4 hover:bg-primary/5"
-                                                    >
-                                                        <Plus className="h-3.5 w-3.5 mr-1.5" /> Ajouter un acte
-                                                    </Button>
-                                                </div>
-
-                                                {selectedActs.length > 0 && (
-                                                    <div className="space-y-2">
-                                                        {selectedActs.map((act, idx) => (
-                                                            <div key={idx} className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-2xl animate-in fade-in slide-in-from-top-2">
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className="h-2 w-2 rounded-full bg-primary" />
-                                                                    <span className="font-bold text-slate-700">{act.name}</span>
-                                                                </div>
-                                                                <div className="flex items-center gap-4">
-                                                                    <span className="font-black text-primary">{act.price.toLocaleString()} DZD</span>
-                                                                    <Button
-                                                                        variant="ghost"
-                                                                        size="icon"
-                                                                        onClick={() => removeAct(idx)}
-                                                                        className="h-8 w-8 text-slate-300 hover:text-rose-500 rounded-full"
-                                                                    >
-                                                                        <X className="h-4 w-4" />
-                                                                    </Button>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {/* DENTAL CHART SECTION */}
-                                            <DentalChart
-                                                selectedTeeth={selectedTeeth}
-                                                onToggle={toggleTooth}
-                                                onClear={() => setSelectedTeeth([])}
-                                            />
-
-                                            {/* TRAITEMENT (READ-ONLY IF ACTS EXIST) */}
-                                            <div className="space-y-3 text-center">
-                                                <label className="text-[11px] font-black uppercase tracking-widest text-slate-400">
-                                                    {selectedHistoryTreatment && selectedActs.length > 0
-                                                        ? 'Nouveaux actes à ajouter au traitement'
-                                                        : selectedHistoryTreatment
-                                                            ? 'Traitement existant'
-                                                            : 'Détails du Traitement'}
-                                                </label>
-                                                <div className="relative">
-                                                    <Input
-                                                        placeholder="Saisissez l'acte médical..."
-                                                        value={treatment}
-                                                        onChange={(e) => {
-                                                            setTreatment(e.target.value);
-                                                            setShowTreatmentSuggestions(true);
-                                                        }}
-                                                        onFocus={() => setShowTreatmentSuggestions(true)}
-                                                        onBlur={() => setTimeout(() => setShowTreatmentSuggestions(false), 200)}
-                                                        disabled={!!selectedHistoryTreatment}
-                                                        className="h-16 rounded-3xl border-slate-200 bg-white font-black px-8 text-lg text-center focus:ring-primary/20 shadow-sm"
-                                                    />
-                                                    {showTreatmentSuggestions && (
-                                                        <div className="absolute left-0 right-0 mt-2 bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-2xl max-h-48 overflow-y-auto z-50 animate-in fade-in slide-in-from-top-2">
-                                                            {treatmentsList
-                                                                .filter(t => {
-                                                                    const q = treatment.trim().toLowerCase();
-                                                                    if (!q) return false;
-                                                                    return t.toLowerCase().includes(q);
-                                                                })
-                                                                .slice(0, 8)
-                                                                .map(s => (
-                                                                    <button
-                                                                        key={s}
-                                                                        type="button"
-                                                                        onMouseDown={(e) => { e.preventDefault(); setTreatment(s); setShowTreatmentSuggestions(false); }}
-                                                                        className="w-full text-center px-6 py-4 hover:bg-slate-50 font-black text-sm text-slate-700 transition-colors border-b last:border-0 border-slate-50"
-                                                                    >
-                                                                        {s}
-                                                                    </button>
-                                                                ))}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            {/* MONTANT TOTAL */}
-                                            <div className="space-y-3 text-center">
-                                                <label className="text-[11px] font-black uppercase tracking-widest text-slate-400">
-                                                    {selectedHistoryTreatment && selectedActs.length > 0
-                                                        ? 'Montant des nouveaux actes (DZD)'
-                                                        : selectedHistoryTreatment
-                                                            ? 'Montant du traitement existant (DZD)'
-                                                            : 'Montant total (DZD)'}
-                                                </label>
-                                                <Input
-                                                    placeholder="0"
-                                                    value={totalAmount}
-                                                    onChange={(e) => setTotalAmount(e.target.value)}
-                                                    type="number"
-                                                    disabled={!!selectedHistoryTreatment}
-                                                    className="h-16 rounded-3xl border-slate-200 bg-slate-50/50 font-black text-slate-700 text-center text-xl shadow-inner"
-                                                />
-                                            </div>
-
-                                            {/* NOTE */}
-                                            <div className="space-y-3 text-center">
-                                                <label className="text-[11px] font-black uppercase tracking-widest text-slate-400">Note observationnelle</label>
-                                                <Input
-                                                    placeholder="Observations, détails du soin..."
-                                                    value={completeNotes}
-                                                    onChange={(e) => setCompleteNotes(e.target.value)}
-                                                    className="h-16 rounded-3xl border-slate-200 bg-white font-black px-8 text-center text-slate-600 shadow-sm"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="p-10 border-t bg-slate-50/50 flex justify-center">
-                                        <Button
-                                            onClick={handleComplete}
-                                            disabled={isCompletingClient}
-                                            className="h-16 rounded-[2rem] font-black px-24 shadow-2xl shadow-primary/30 bg-primary hover:bg-primary/90 text-white transition-all text-base uppercase tracking-[0.2em] w-full sm:w-auto"
-                                        >
-                                            {isCompletingClient ? 'Enregistrement...' : 'Confirmer'}
-                                        </Button>
-                                    </div>
-                                </Card>
-                            </div>
-                        ) : (
-                            <div className="py-24 text-center bg-white rounded-[3rem] border-2 border-dashed border-slate-100 flex flex-col items-center w-full shadow-sm">
-                                <div className="h-20 w-20 bg-primary/10 rounded-full flex items-center justify-center mb-6">
-                                    <UserCheck className="h-10 w-10 text-primary/30" />
+                        {/* FILE D'ATTENTE PATIENTS LIST */}
+                        <div className="mb-6 space-y-3 bg-white p-4 sm:p-6 rounded-[2rem] border border-slate-100 shadow-sm">
+                            {doctorEntries.length === 0 ? (
+                                <div className="py-8 text-center bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                                    <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Aucun patient en attente</p>
                                 </div>
-                                <h3 className="text-xl font-black text-slate-400 uppercase tracking-widest mb-2">Cabinet Vide</h3>
-                                <p className="text-xs text-slate-400 font-medium max-w-[280px] mx-auto">Aucun patient n'est actuellement en consultation.</p>
-                                <Button
-                                    variant="ghost"
-                                    className="mt-8 text-[10px] font-black uppercase text-primary bg-primary/5 rounded-full px-6 hover:bg-primary/10"
-                                    onClick={() => fetchDashboardData()}
-                                >
-                                    Actualiser
-                                </Button>
-                            </div>
-                        )}
+                            ) : (
+                                <div className="space-y-3">
+                                    {doctorEntries.map((entry, index) => {
+                                        const stateColors = {
+                                            U: 'bg-destructive text-destructive-foreground border-none',
+                                            N: 'bg-primary text-primary-foreground border-none',
+                                            R: 'bg-foreground text-background border-none',
+                                        };
+                                        const stateLabels = { U: 'Urgence', N: 'Nouveau', R: 'Rendez-vous' };
+
+                                        return (
+                                            <Card key={entry.id} className="border-0 shadow-sm hover:shadow-md transition-shadow bg-white rounded-2xl gpu">
+                                                <CardContent className="p-3 sm:p-4 flex items-center justify-between gap-2">
+                                                    <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                                                        <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-secondary flex items-center justify-center shrink-0">
+                                                            <span className="text-xs sm:text-sm font-bold text-primary">{index + 1}</span>
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="font-bold text-base sm:text-lg text-foreground">
+                                                                    {entry.patient_name || entry.phone}
+                                                                </span>
+                                                                <Badge variant="outline" className={`${stateColors[entry.state]} text-xs px-2.5 py-0.5 rounded-full font-semibold`}>
+                                                                    {stateLabels[entry.state]}
+                                                                </Badge>
+                                                            </div>
+                                                            <p className="text-xs text-muted-foreground truncate mt-0.5 font-medium">
+                                                                {entry.phone}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-3 shrink-0">
+                                                        <a href={`tel:${entry.phone}`} className="text-primary flex items-center justify-center p-2 hover:bg-secondary/50 rounded-full transition-colors" title="Appeler">
+                                                            <Phone className="h-5 w-5" />
+                                                        </a>
+                                                        <Button
+                                                            size="sm"
+                                                            onClick={() => handleCallPatient(entry)}
+                                                            className="gap-1.5 shrink-0 h-9 sm:h-10 px-4 text-xs sm:text-sm font-bold rounded-full shadow-md shadow-primary/20"
+                                                        >
+                                                            <span>Suivant</span> <ChevronRight className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                </CardContent>
+                                            </Card>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+
                     </TabsContent>
 
                     {/* ORDONNANCES CONTENT */}
@@ -1214,103 +1063,7 @@ const MedecinDashboard = () => {
                         </div>
                     </TabsContent>
 
-                    {/* PATIENTS CONTENT */}
-                    <TabsContent value="patients" className="mt-6 animate-in fade-in slide-in-from-bottom-2">
-                        <div className="space-y-6">
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                                <h1 className="text-2xl font-black italic text-slate-800">Votre Fichier Patient</h1>
-                                <div className="relative w-full sm:w-80">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                                    <Input placeholder="Nom ou téléphone..." value={searchPatient} onChange={e => setSearchPatient(e.target.value)} className="pl-10 h-11 border-slate-200 rounded-xl" />
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {filteredPatientsList.map(p => (
-                                    <Card key={p.id} className="border-none shadow-premium bg-white hover:shadow-lg transition-all cursor-pointer group" onClick={() => { setSelectedPatient(p); setIsPatientDialogOpen(true); }}>
-                                        <CardContent className="p-6">
-                                            <div className="flex items-center gap-4 mb-4">
-                                                <div className="h-12 w-12 rounded-2xl bg-primary/5 flex items-center justify-center text-primary font-black text-xl group-hover:bg-primary group-hover:text-white transition-all">{p.client_name.charAt(0)}</div>
-                                                <div>
-                                                    <h3 className="font-bold text-slate-800">{p.client_name}</h3>
-                                                    <p className="text-xs text-slate-400">{p.phone}</p>
-                                                </div>
-                                            </div>
-                                            <div className="space-y-2 border-t pt-4">
-                                                <div className="flex justify-between text-xs font-medium"><span className="text-slate-400 uppercase tracking-widest">Traitement</span><span className="text-slate-700">{p.treatment}</span></div>
-                                                <div className="flex justify-between text-xs font-medium"><span className="text-slate-400 uppercase tracking-widest">Dernière séance</span><span className="text-slate-700">{format(new Date(p.completed_at), 'dd/MM/yy')}</span></div>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                ))}
-                            </div>
-                        </div>
-                    </TabsContent>
 
-                    {/* ANALYTICS CONTENT */}
-                    <TabsContent value="analytics" className="mt-6 animate-in fade-in slide-in-from-bottom-2">
-                        <div className="space-y-8">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <Card className="border-none shadow-premium bg-gradient-to-br from-indigo-500 to-indigo-600 text-white rounded-3xl">
-                                    <CardContent className="p-6">
-                                        <div className="flex justify-between items-start mb-4">
-                                            <DollarSign className="h-8 w-8 text-white/20" />
-                                            <Input type="date" value={selectedRevenueDate} onChange={e => setSelectedRevenueDate(e.target.value)} className="w-auto h-7 text-[10px] font-bold bg-white/10 border-0 rounded-full text-white cursor-pointer" />
-                                        </div>
-                                        <p className="text-white/60 text-xs font-bold uppercase tracking-widest">Revenu du Jour Choisi</p>
-                                        <h3 className="text-3xl font-black">{selectedDayRevenue.toLocaleString()} DZD</h3>
-                                    </CardContent>
-                                </Card>
-                                <Card className="border-none shadow-premium bg-white rounded-3xl">
-                                    <CardContent className="p-6">
-                                        <Users className="h-8 w-8 text-primary/20 mb-4" />
-                                        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Patients Actifs</p>
-                                        <h3 className="text-3xl font-black text-slate-800">{filteredPaymentsByDate.length}</h3>
-                                    </CardContent>
-                                </Card>
-                            </div>
-                            <div className="grid grid-cols-1 gap-8">
-                                <Card className="border-none shadow-premium bg-white rounded-3xl overflow-hidden">
-                                    <CardHeader className="p-6 border-b bg-muted/10">
-                                        <CardTitle className="text-lg font-black italic flex items-center gap-2"><DollarSign className="h-5 w-5 text-primary" /> Détails des Paiements Récents</CardTitle>
-                                        <CardDescription className="text-xs uppercase font-bold tracking-widest opacity-60">Dernières consultations terminées</CardDescription>
-                                    </CardHeader>
-                                    <CardContent className="p-0">
-                                        <div className="h-[450px] overflow-y-auto no-scrollbar">
-                                            <div className="overflow-x-auto no-scrollbar md:overflow-x-visible [&_.relative]:no-scrollbar">
-                                                <Table className="min-w-[640px] md:min-w-full">
-                                                <TableHeader className="bg-muted/30">
-                                                    <TableRow>
-                                                        <TableHead className="font-black text-[10px] uppercase tracking-wider text-center">Patient</TableHead>
-                                                        <TableHead className="font-black text-[10px] uppercase tracking-wider text-center">Heure</TableHead>
-                                                        <TableHead className="font-black text-[10px] uppercase tracking-wider text-center">Traitement</TableHead>
-                                                        <TableHead className="font-black text-[10px] uppercase tracking-wider text-center">Total</TableHead>
-                                                        <TableHead className="font-black text-[10px] uppercase tracking-wider text-center">Payé</TableHead>
-                                                        <TableHead className="font-black text-[10px] uppercase tracking-wider text-center">Reste</TableHead>
-                                                    </TableRow>
-                                                </TableHeader>
-                                                <TableBody>
-                                                    {filteredPaymentsByDate.map((p, idx) => (
-                                                        <TableRow key={p.id || idx} className="hover:bg-slate-50 transition-colors">
-                                                            <TableCell className="text-center font-black text-sm text-foreground uppercase tracking-tight">{p.client_name}</TableCell>
-                                                            <TableCell className="text-center text-xs text-muted-foreground font-bold">{format(new Date(p.completed_at), 'HH:mm')}</TableCell>
-                                                            <TableCell className="text-center text-xs font-bold text-primary italic">{p.treatment}</TableCell>
-                                                            <TableCell className="text-center font-bold text-slate-700">{p.total_amount?.toLocaleString()}</TableCell>
-                                                            <TableCell className="text-center font-black text-emerald-600 bg-emerald-50/50">{p.tranche_paid?.toLocaleString()}</TableCell>
-                                                            <TableCell className="text-center font-black text-rose-500">{(p.total_amount - (p.tranche_paid || 0)).toLocaleString()}</TableCell>
-                                                        </TableRow>
-                                                    ))}
-                                                    {filteredPaymentsByDate.length === 0 && (
-                                                        <TableRow><TableCell colSpan={6} className="text-center py-20 text-muted-foreground italic font-bold">Aucun paiement pour cette date</TableCell></TableRow>
-                                                    )}
-                                                </TableBody>
-                                            </Table>
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </div>
-                        </div>
-                    </TabsContent>
                 </Tabs>
 
                 {/* ADD ACT MODAL */}
@@ -1895,19 +1648,12 @@ const MedecinDashboard = () => {
                         </div>
                     </div>
 
-                    <DialogFooter className="p-8 border-t bg-slate-50/50 flex-shrink-0 flex sm:justify-between items-center gap-3">
-                        <div className="flex gap-2">
-                            <Button variant="outline" onClick={saveAsTemplate} className="rounded-xl font-bold h-12 px-4 border-slate-300 text-slate-600 bg-white hover:bg-slate-50">
-                                <ClipboardList className="h-5 w-5 mr-2" /> Enregistrer comme Modèle
-                            </Button>
-                        </div>
-                        <div className="flex gap-3">
-                            <Button variant="ghost" onClick={() => setShowOrdonnanceModal(false)} className="rounded-xl font-bold h-12 px-6">Annuler</Button>
-                            <Button variant="secondary" onClick={() => setShowPatientPicker(true)} className="rounded-xl font-bold h-12 px-6">Ajouter au patient</Button>
-                            <Button variant="outline" onClick={() => handlePrintOrdonnance({ ...ordonnanceForm, prescription_date: ordonnanceForm.date })} className="rounded-xl font-black h-12 px-10 border-primary text-primary hover:bg-primary/5 shadow-lg shadow-primary/10 flex-1 sm:flex-none">
-                                <Printer className="h-5 w-5 mr-3" /> Imprimer l'Ordonnance
-                            </Button>
-                        </div>
+                    <DialogFooter className="p-8 border-t bg-slate-50/50 flex-shrink-0 flex justify-end items-center gap-3">
+                        <Button variant="ghost" onClick={() => setShowOrdonnanceModal(false)} className="rounded-xl font-bold h-12 px-6">Annuler</Button>
+                        <Button variant="secondary" onClick={saveAsTemplate} className="rounded-xl font-bold h-12 px-6">Enregistrer comme Modèle</Button>
+                        <Button variant="outline" onClick={() => handlePrintOrdonnance({ ...ordonnanceForm, prescription_date: ordonnanceForm.date })} className="rounded-xl font-black h-12 px-10 border-primary text-primary hover:bg-primary/5 shadow-lg shadow-primary/10">
+                            <Printer className="h-5 w-5 mr-3" /> Imprimer l'Ordonnance
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

@@ -11,7 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Phone, Plus, LogOut, ChevronRight, ChevronLeft, Users, Clock, CheckCircle, XCircle, MessageCircle, Pencil, Trash2, UserCheck, Calendar as CalendarIcon, DollarSign, ShoppingCart, Sparkles, Lock, Unlock, QrCode, Package, Search } from 'lucide-react';
+import { Phone, Plus, LogOut, ChevronRight, ChevronLeft, Users, Clock, CheckCircle, XCircle, MessageCircle, Pencil, Trash2, UserCheck, Calendar as CalendarIcon, DollarSign, ShoppingCart, Sparkles, Lock, Unlock, QrCode, Package, Search, Pause } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 import QrScannerModal from '@/components/QrScannerModal';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -124,7 +125,7 @@ const QueueItem = React.memo(({ entry, index, onEdit, onDelete, onNext }: { entr
 
 const Accueil = () => {
   const { user, signOut } = useAuth();
-  const { entries, inCabinetEntries, doctors, loading, addClient, callClient, completeClient, updateClient, deleteClient, updateCompletedClient, deleteCompletedClient, returnToQueue } = useQueue();
+  const { entries, inCabinetEntries, doctors, loading, addClient, callClient, completeClient, updateClient, deleteClient, updateCompletedClient, deleteCompletedClient, returnToQueue, pausedDoctors } = useQueue();
 
   const [isManagerAuthorized, setIsManagerAuthorized] = useState(false);
   const [managerPassword, setManagerPassword] = useState('');
@@ -197,11 +198,6 @@ const Accueil = () => {
   const [editDoctorId, setEditDoctorId] = useState('');
   const [doctorFilter, setDoctorFilter] = useState<string>('all');
 
-  // Quick Expense Modal
-  const [showExpenseModal, setShowExpenseModal] = useState(false);
-  const [expenseAmount, setExpenseAmount] = useState('');
-  const [expenseDesc, setExpenseDesc] = useState('');
-  const [savingExpense, setSavingExpense] = useState(false);
   const [isCompletingClient, setIsCompletingClient] = useState(false);
   // Channel Choice Modal
   const [showChannelChoice, setShowChannelChoice] = useState(false);
@@ -301,10 +297,11 @@ const Accueil = () => {
       const doctorEntries = entries.filter(e => e.doctor_id === doctor.id);
       return {
         ...doctor,
-        waitingCount: doctorEntries.length
+        waitingCount: doctorEntries.length,
+        is_paused: !!(doctor.is_paused || pausedDoctors[doctor.id])
       };
     });
-  }, [doctors, entries]);
+  }, [doctors, entries, pausedDoctors]);
 
 
   // Removed handleOpenSession and handleCloseSession as séance logic is being removed.
@@ -814,31 +811,6 @@ const Accueil = () => {
     else toast.success('Patient supprimé');
   };
 
-  const handleAddExpense = async () => {
-    if (!expenseAmount || !expenseDesc) {
-      toast.error('Veuillez remplir le montant et la description');
-      return;
-    }
-    setSavingExpense(true);
-    try {
-      const { error } = await supabase.from('expenses').insert({
-        amount: parseFloat(expenseAmount),
-        description: expenseDesc,
-        date: format(new Date(), 'yyyy-MM-dd'),
-        created_by: user?.id
-      });
-      if (error) throw error;
-      toast.success('Dépense ajoutée avec succès');
-      setExpenseAmount('');
-      setExpenseDesc('');
-      setShowExpenseModal(false);
-    } catch (err) {
-      toast.error('Erreur lors de l\'ajout de la dépense');
-    } finally {
-      setSavingExpense(false);
-    }
-  };
-
   const filtered = useMemo(() => {
     return entries.filter(e => {
       const matchesDoctor = doctorFilter === 'all' || e.doctor_id === doctorFilter;
@@ -889,16 +861,6 @@ const Accueil = () => {
             await fetchTodayClients();
             setShowTodayModal(true);
           }} variant="outline" size="sm" className="h-8 px-2 sm:px-3 text-[11px] font-black uppercase">Terminer</Button>
-          <Button asChild variant="secondary" size="sm" className="h-8 px-2 sm:px-3 text-[11px] font-black uppercase tracking-widest bg-primary/10 text-primary hover:bg-primary/20 border-0 rounded-full sm:rounded-md shadow-none">
-            <Link to="/accueil/factures/ajouter">
-              <ShoppingCart className="h-3.5 w-3.5 sm:mr-1.5" />
-              <span className="hidden sm:inline">Facture</span>
-            </Link>
-          </Button>
-          <Button variant="outline" size="sm" className="h-8 px-2 sm:px-3 text-[11px] font-black uppercase tracking-widest bg-destructive/5 text-destructive border-destructive/20 hover:bg-destructive/10 rounded-full sm:rounded-md shadow-none" onClick={() => setShowExpenseModal(true)}>
-            <DollarSign className="h-3.5 w-3.5 sm:mr-1.5" />
-            <span className="hidden sm:inline">Dépense</span>
-          </Button>
         </div>
 
 
@@ -1125,13 +1087,23 @@ const Accueil = () => {
             return (
               <Card
                 key={ds.id}
-                className="border-0 shadow-sm shrink-0 w-40 sm:w-56 snap-start cursor-pointer hover:shadow-md transition-shadow"
+                className={cn(
+                  "border-0 shadow-sm shrink-0 w-40 sm:w-56 snap-start cursor-pointer transition-all duration-300 relative overflow-hidden",
+                  ds.is_paused
+                    ? "bg-rose-600 text-white ring-2 ring-rose-600 shadow-rose-200 shadow-lg"
+                    : "bg-white hover:shadow-md"
+                )}
                 onClick={() => setDoctorFilter(doctorFilter === ds.id ? 'all' : ds.id)}
               >
                 <CardContent className="p-3 sm:p-4 text-center">
-                  <p className="text-xs font-medium text-muted-foreground mb-1 truncate">{ds.name}</p>
-                  <p className="text-xl sm:text-2xl font-bold text-foreground">{ds.waitingCount}</p>
-                  <p className="text-xs text-muted-foreground">en attente</p>
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    {ds.is_paused && <Pause className="h-3.5 w-3.5 text-white fill-current animate-pulse shrink-0" />}
+                    <p className={cn("text-xs font-medium truncate", ds.is_paused ? "text-white font-bold" : "text-muted-foreground")}>{ds.name}</p>
+                  </div>
+                  <p className={cn("text-xl sm:text-2xl font-bold", ds.is_paused ? "text-white" : "text-foreground")}>{ds.waitingCount}</p>
+                  <p className={cn("text-xs font-bold uppercase tracking-wider mt-0.5", ds.is_paused ? "text-rose-100" : "text-muted-foreground")}>
+                    {ds.is_paused ? "EN PAUSE" : "en attente"}
+                  </p>
                 </CardContent>
               </Card>
             );
@@ -1730,43 +1702,6 @@ const Accueil = () => {
           </div>
           <DialogFooter>
             <Button onClick={handleUpdate} className="w-full h-11 sm:h-12">Enregistrer</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      {/* Add Expense Modal */}
-      <Dialog open={showExpenseModal} onOpenChange={setShowExpenseModal}>
-        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5 text-destructive" />
-              Nouvelle Dépense Rapide
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Montant (DZD)</label>
-              <Input
-                placeholder="ex: 1500"
-                type="number"
-                value={expenseAmount}
-                onChange={(e) => setExpenseAmount(e.target.value)}
-                className="h-12 text-lg font-bold"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Description / Motif</label>
-              <Input
-                placeholder="Café, Fournitures, Réparations..."
-                value={expenseDesc}
-                onChange={(e) => setExpenseDesc(e.target.value)}
-                className="h-12"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button onClick={handleAddExpense} disabled={savingExpense} className="w-full h-12 text-sm font-black uppercase tracking-widest bg-destructive hover:bg-destructive/90 text-white border-0">
-              {savingExpense ? "Enregistrement..." : "Confirmer la dépense"}
-            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

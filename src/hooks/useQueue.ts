@@ -25,6 +25,7 @@ export interface Doctor {
   id: string;
   name: string;
   initial: string;
+  is_paused?: boolean;
 }
 
 export interface ActiveSession {
@@ -39,6 +40,59 @@ export function useQueue() {
   const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pausedDoctors, setPausedDoctors] = useState<Record<string, boolean>>(() => {
+    try {
+      const saved = localStorage.getItem('pv_paused_doctors');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  // Realtime subscription for doctor pause events across all clients
+  useEffect(() => {
+    const channel = supabase
+      .channel('pv-doctor-pause')
+      .on('broadcast', { event: 'pause_toggle' }, (payload) => {
+        if (payload.payload?.doctorId) {
+          const { doctorId, is_paused } = payload.payload;
+          setPausedDoctors(prev => {
+            const next = { ...prev, [doctorId]: is_paused };
+            try { localStorage.setItem('pv_paused_doctors', JSON.stringify(next)); } catch {}
+            return next;
+          });
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const toggleDoctorPause = async (doctorId: string) => {
+    const currentStatus = !!(doctors.find(d => d.id === doctorId)?.is_paused || pausedDoctors[doctorId]);
+    const nextStatus = !currentStatus;
+
+    setPausedDoctors(prev => {
+      const next = { ...prev, [doctorId]: nextStatus };
+      try { localStorage.setItem('pv_paused_doctors', JSON.stringify(next)); } catch {}
+      return next;
+    });
+
+    setDoctors(prev => prev.map(d => d.id === doctorId ? { ...d, is_paused: nextStatus } : d));
+
+    await supabase.from('doctors').update({ is_paused: nextStatus } as any).eq('id', doctorId);
+
+    const channel = supabase.channel('pv-doctor-pause');
+    channel.send({
+      type: 'broadcast',
+      event: 'pause_toggle',
+      payload: { doctorId, is_paused: nextStatus }
+    });
+
+    return nextStatus;
+  };
 
   const removeEntryFromState = useCallback((entryId: string) => {
     setEntries(prev => prev.filter(e => e.id !== entryId));
@@ -537,5 +591,7 @@ export function useQueue() {
     updateCompletedClient,
     deleteCompletedClient,
     returnToQueue,
+    pausedDoctors,
+    toggleDoctorPause,
   };
 }

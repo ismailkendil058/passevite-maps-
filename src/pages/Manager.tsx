@@ -39,7 +39,6 @@ const Manager = () => {
   const [dateFrom, setDateFrom] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [dateTo, setDateTo] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [loading, setLoading] = useState(true);
-  const [totalExpenses, setTotalExpenses] = useState(0);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -69,18 +68,6 @@ const Manager = () => {
         doctor: c.doctor as any,
         receptionist_name: (nameMap.get(c.receptionist_id) as string) || '—',
       })));
-
-
-    }
-
-    const { data: expData } = await supabase
-      .from('expenses')
-      .select('amount')
-      .gte('date', dateFrom)
-      .lte('date', dateTo);
-
-    if (expData) {
-      setTotalExpenses(expData.reduce((s, e) => s + (e.amount || 0), 0));
     }
     setLoading(false);
 
@@ -99,9 +86,6 @@ const Manager = () => {
     const channel = supabase
       .channel('manager-live-updates')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'completed_clients' }, () => {
-        fetchData();
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'expenses' }, () => {
         fetchData();
       })
       .subscribe();
@@ -183,15 +167,9 @@ const Manager = () => {
         <div className="flex items-center gap-2">
           <FeedbackStats />
           <Button asChild variant="ghost" size="sm" className="h-9">
-            <Link to="/appointment">
+            <Link to="/rendezvous">
               <Calendar className="h-4 w-4 mr-1" />
               <span className="hidden sm:inline">Rendez-vous</span>
-            </Link>
-          </Button>
-          <Button asChild variant="ghost" size="sm" className="h-9">
-            <Link to="/manager/depenses">
-              <DollarSign className="h-4 w-4 mr-1" />
-              <span className="hidden sm:inline">Dépenses</span>
             </Link>
           </Button>
           <Button asChild variant="ghost" size="sm" className="h-9">
@@ -255,7 +233,7 @@ const Manager = () => {
         </div>
 
         {/* Analytics Cards */}
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
           <Card className="border-0 shadow-sm">
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
@@ -283,16 +261,6 @@ const Manager = () => {
                 <span className="text-xs text-muted-foreground">Docteur</span>
               </div>
               <p className="text-xl sm:text-2xl font-bold text-foreground">{analytics.byDoctor.size}</p>
-            </CardContent>
-          </Card>
-          <Card className="border-0 shadow-sm bg-destructive/5">
-            <CardContent className="p-3 sm:p-4">
-              <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
-                <DollarSign className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-destructive" />
-                <span className="text-xs text-muted-foreground">Dépenses</span>
-              </div>
-              <p className="text-lg sm:text-2xl font-bold text-destructive">{totalExpenses.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground">DZD</p>
             </CardContent>
           </Card>
         </div>
